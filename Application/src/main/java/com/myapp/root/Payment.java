@@ -1,6 +1,8 @@
 package com.myapp.root;
 
-public class Payment {
+import java.io.Serializable;
+
+public class Payment implements Serializable {
 
     private String currency;
     private String amount;
