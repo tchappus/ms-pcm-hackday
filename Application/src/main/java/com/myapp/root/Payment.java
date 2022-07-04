@@ -4,8 +4,14 @@ import java.io.Serializable;
 
 public class Payment implements Serializable {
 
+
+
     private String currency;
     private long amount;
+
+    public Payment() {
+
+    }
 
     public String getCurrency() {
         return currency;

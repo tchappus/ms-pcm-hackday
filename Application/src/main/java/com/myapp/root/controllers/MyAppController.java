@@ -3,11 +3,12 @@ package com.myapp.root.controllers;
 import com.myapp.root.Payment;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jms.core.JmsTemplate;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-@Controller
+@RestController
 public class MyAppController {
     @Autowired
     private JmsTemplate jmsTemplate;
@@ -18,7 +19,7 @@ public class MyAppController {
     }
 
     @PostMapping("/send")
-    public String send(Payment payment) {
+    public String send(@RequestBody Payment payment) {
         jmsTemplate.convertAndSend("payments", payment);
 
         return "sent";
