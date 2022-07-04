@@ -5,7 +5,7 @@ import java.io.Serializable;
 public class Payment implements Serializable {
 
     private String currency;
-    private String amount;
+    private long amount;
 
     public String getCurrency() {
         return currency;
@@ -15,11 +15,11 @@ public class Payment implements Serializable {
         this.currency = currency;
     }
 
-    public String getAmount() {
+    public long getAmount() {
         return amount;
     }
 
-    public void setAmount(String amount) {
+    public void setAmount(long amount) {
         this.amount = amount;
     }
 
