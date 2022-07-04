@@ -1,6 +1,6 @@
 package com.myapp.root.controllers;
 
-import com.myapp.root.Payment;
+import com.myapp.root.InitiatedPayment;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,7 +19,7 @@ public class MyAppController {
     }
 
     @PostMapping("/send")
-    public String send(@RequestBody Payment payment) {
+    public String send(@RequestBody InitiatedPayment payment) {
         jmsTemplate.convertAndSend("payments", payment);
 
         return "sent";

@@ -18,6 +18,11 @@ dependencies {
 
 //	implementation 'org.springframework.boot:spring-boot-starter-integration'
 	implementation 'com.azure.spring:spring-cloud-azure-starter-servicebus-jms:4.2.0'
+	implementation 'com.azure.spring:spring-cloud-azure-starter-data-cosmos:4.2.0'
+
+	implementation 'org.springframework.boot:spring-boot-starter-cache'
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
 	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }

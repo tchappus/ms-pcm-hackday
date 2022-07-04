@@ -2,15 +2,22 @@ package com.myapp.root;
 
 import java.io.Serializable;
 
-public class Payment implements Serializable {
+public class InitiatedPayment implements Serializable {
 
-
-
+    private String bicCode;
     private String currency;
     private long amount;
 
-    public Payment() {
+    public InitiatedPayment() {
 
+    }
+
+    public String getBicCode() {
+        return bicCode;
+    }
+
+    public void setBicCode(String bicCode) {
+        this.bicCode = bicCode;
     }
 
     public String getCurrency() {
@@ -29,12 +36,12 @@ public class Payment implements Serializable {
         this.amount = amount;
     }
 
-
     @Override
     public String toString() {
-        return "Payment{" +
-                "currency='" + currency + '\'' +
-                ", amount='" + amount + '\'' +
+        return "InitiatedPayment{" +
+                "bicCode='" + bicCode + '\'' +
+                ", currency='" + currency + '\'' +
+                ", amount=" + amount +
                 '}';
     }
 }
