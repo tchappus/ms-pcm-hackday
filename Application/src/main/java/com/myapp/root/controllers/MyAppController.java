@@ -19,7 +19,7 @@ public class MyAppController {
 
     @PostMapping("/send")
     public String send(Payment payment) {
-        jmsTemplate.convertAndSend(payment);
+        jmsTemplate.convertAndSend("payments", payment);
 
         return "sent";
     }
