@@ -1,6 +1,6 @@
 plugins {
-	id 'org.springframework.boot' version '2.1.15.RELEASE'
-	id 'io.spring.dependency-management' version '1.0.9.RELEASE'
+	id 'org.springframework.boot' version '2.7.1'
+	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
 	id 'java'
 	id 'war'
 }
@@ -15,6 +15,9 @@ repositories {
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+
+//	implementation 'org.springframework.boot:spring-boot-starter-integration'
+	implementation 'com.azure.spring:spring-cloud-azure-starter-servicebus-jms:4.2.0'
 	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
