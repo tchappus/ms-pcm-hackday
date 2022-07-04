@@ -12,6 +12,6 @@ public class Listener {
 
     @JmsListener(destination = "payments", containerFactory = "jmsListenerContainerFactory")
     public void recieveMessage(Payment payment) {
-        logger.debug(payment.toString());
+        logger.info(payment.toString());
     }
 }
