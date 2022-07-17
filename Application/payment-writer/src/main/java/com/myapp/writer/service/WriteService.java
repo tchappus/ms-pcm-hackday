@@ -20,7 +20,7 @@ public class WriteService {
         this.paymentsRepo = paymentsRepo;
     }
 
-    @JmsListener(destination = "payments", containerFactory = "jmsListenerContainerFactory")
+    @JmsListener(destination = "payments-persist", containerFactory = "jmsListenerContainerFactory")
     public void recieveMessage(EnrichedPayment payment) {
         logger.info(payment.toString());
 
