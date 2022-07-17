@@ -1,0 +1,24 @@
+plugins {
+	id 'org.springframework.boot' version '2.7.1'
+	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+    id 'java'
+    id 'war'
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+    implementation project(':lib')
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'com.azure.spring:spring-cloud-azure-starter-servicebus-jms:4.2.0'
+
+    providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+bootWar {
+    baseName = 'ROOT'
+    archiveName 'ROOT.war'
+}

@@ -9,9 +9,9 @@ on:
 
 env:
   AZURE_WEBAPP_NAME: "ms-pcm-hackday"    # set this to your application's name
-  AZURE_WEBAPP_PACKAGE_PATH: "Application/build"      # set this to the path to your web app project, defaults to the repository root
-  JAVA_VERSION: '1.8'             # set this to the java version to use
-  RESOURCEGROUPNAME: "ms-pcm-hackday-rg"
+  AZURE_WEBAPP_PACKAGE_PATH: "Application"      # set this to the path to your web app project, defaults to the repository root
+  JAVA_VERSION: '11'             # set this to the java version to use
+  RESOURCEGROUPNAME: "payment-apps"
   LOCATION: "East US"
   HOSTINGPLANNAME: "ms-pcm-hackday-plan"
   APPINSIGHTLOCATION: "East US"
@@ -44,10 +44,10 @@ jobs:
     # Archive build artifact
     - name: Archive Build artifacts
       run: |
-        zip -qq -r ./buildartifacts/build.zip ./Application/build
+        zip -qq -r ./buildartifacts/build.zip ./Application
 
     # Uploading application to build artifact
-    - name: Upload target to Build Artifact
+    - name: Upload target to Build Artifact d
       continue-on-error: false
       uses: actions/upload-artifact@v2
       with:
@@ -112,36 +112,51 @@ jobs:
       with:
         inlineScript: |
           az group create --name "${{ env.RESOURCEGROUPNAME }}" --location "${{ env.LOCATION }}"
-          az deployment group create --resource-group "${{ env.RESOURCEGROUPNAME }}" --template-file ./ArmTemplates/${{ env.WEBAPPTEMPLATENAME }} --parameters webAppName="${{ env.AZURE_WEBAPP_NAME }}" hostingPlanName="${{ env.HOSTINGPLANNAME }}" appInsightsLocation="${{ env.APPINSIGHTLOCATION }}" sku="${{ env.SKU }}"
+          az deployment group create --resource-group "${{ env.RESOURCEGROUPNAME }}" --template-file ./ArmTemplates/${{ env.WEBAPPTEMPLATENAME }} --parameters ./ArmTemplates/generator-parameters.json
+          az deployment group create --resource-group "${{ env.RESOURCEGROUPNAME }}" --template-file ./ArmTemplates/${{ env.WEBAPPTEMPLATENAME }} --parameters ./ArmTemplates/enricher-parameters.json
+          az deployment group create --resource-group "${{ env.RESOURCEGROUPNAME }}" --template-file ./ArmTemplates/${{ env.WEBAPPTEMPLATENAME }} --parameters ./ArmTemplates/writer-parameters.json
+
 
     # Deploy web app on azure
-    - name: 'Deploy to Azure WebApp'
+    - name: 'Deploy to Azure Generator'
       uses: azure/webapps-deploy@v2
       with: 
-        app-name: ${{ env.AZURE_WEBAPP_NAME }}
-        package: '${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/libs/ROOT.war'
+        app-name: '${{ env.AZURE_WEBAPP_NAME }}-generator'
+        package: '${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/payment-generator/build/libs/ROOT.war'
 
-  FunctionalTests:
-    name: Run Functional tests
-    runs-on: windows-latest
-    needs: Deploy
-    steps:
-    - uses: actions/checkout@v2
+    - name: 'Deploy to Azure Enricher'
+      uses: azure/webapps-deploy@v2
+      with: 
+        app-name: '${{ env.AZURE_WEBAPP_NAME }}-enricher'
+        package: '${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/payment-enricher/build/libs/ROOT.war'
 
-    - name: Set up java ${{ env.JAVA_VERSION }}
-      uses: actions/setup-java@v1
-      with:
-        java-version: ${{ env.JAVA_VERSION }}
+    - name: 'Deploy to Azure Writer'
+      uses: azure/webapps-deploy@v2
+      with: 
+        app-name: '${{ env.AZURE_WEBAPP_NAME }}-writer'
+        package: '${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/payment-writer/build/libs/ROOT.war'
 
-    - name: Build functional test source
-      run: |
-        cd Tests
-        chmod +x gradlew
-        ./gradlew fatjar
+  # FunctionalTests:
+  #   name: Run Functional tests
+  #   runs-on: windows-latest
+  #   needs: Deploy
+  #   steps:
+  #   - uses: actions/checkout@v2
 
-    # Run functional tests
-    - name: set up test environment and run tests
-      continue-on-error: false
-      run: |
-        cd Tests\build\libs
-        java -DwebAppUrl="https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/" -DChromeWebDriver="$env:ChromeWebDriver" -cp SampleWebAppFunctionalTests-jar-with-dependencies.jar org.junit.platform.console.ConsoleLauncher --class-path SampleWebAppFunctionalTests-jar-with-dependencies.jar --scan-class-path --reports-dir reports --include-engine junit-vintage
+  #   - name: Set up java ${{ env.JAVA_VERSION }}
+  #     uses: actions/setup-java@v1
+  #     with:
+  #       java-version: ${{ env.JAVA_VERSION }}
+
+  #   - name: Build functional test source
+  #     run: |
+  #       cd Tests
+  #       chmod +x gradlew
+  #       ./gradlew fatjar
+
+  #   # Run functional tests
+  #   - name: set up test environment and run tests
+  #     continue-on-error: false
+  #     run: |
+  #       cd Tests\build\libs
+  #       java -DwebAppUrl="https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/" -DChromeWebDriver="$env:ChromeWebDriver" -cp SampleWebAppFunctionalTests-jar-with-dependencies.jar org.junit.platform.console.ConsoleLauncher --class-path SampleWebAppFunctionalTests-jar-with-dependencies.jar --scan-class-path --reports-dir reports --include-engine junit-vintage

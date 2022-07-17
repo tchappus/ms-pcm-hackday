@@ -1,1 +1,5 @@
 rootProject.name = 'ROOT'
+include 'lib'
+include 'payment-generator'
+include 'payment-enricher'
+include 'payment-writer'

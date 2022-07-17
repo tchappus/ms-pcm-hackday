@@ -1,0 +1,58 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "redisHost": {
+        "reference": {
+          "keyVault": {
+            "id": "/subscriptions/a26f54dd-5e43-4568-a618-8161a14e243d/resourceGroups/payment-apps/providers/Microsoft.KeyVault/vaults/PaymentsVault"
+          },
+          "secretName": "REDIS-HOST"
+        }
+      },
+      "redisPassword": {
+        "reference": {
+          "keyVault": {
+            "id": "/subscriptions/a26f54dd-5e43-4568-a618-8161a14e243d/resourceGroups/payment-apps/providers/Microsoft.KeyVault/vaults/PaymentsVault"
+          },
+          "secretName": "REDIS-PASSWORD"
+        }
+      },
+      "jmsConnectionString": {
+        "reference": {
+          "keyVault": {
+            "id": "/subscriptions/a26f54dd-5e43-4568-a618-8161a14e243d/resourceGroups/payment-apps/providers/Microsoft.KeyVault/vaults/PaymentsVault"
+          },
+          "secretName": "JMS-CONNECTION-STRING"
+        }
+      },
+      "cosmosKey": {
+        "reference": {
+          "keyVault": {
+            "id": "/subscriptions/a26f54dd-5e43-4568-a618-8161a14e243d/resourceGroups/payment-apps/providers/Microsoft.KeyVault/vaults/PaymentsVault"
+          },
+          "secretName": "COSMOS-KEY"
+        }
+      },
+      "cosmosEndpoint": {
+        "reference": {
+          "keyVault": {
+            "id": "/subscriptions/a26f54dd-5e43-4568-a618-8161a14e243d/resourceGroups/payment-apps/providers/Microsoft.KeyVault/vaults/PaymentsVault"
+          },
+          "secretName": "COSMOS-ENDPOINT"
+        }
+      },
+      "webAppName": {
+        "value": "ms-pcm-hackday-enricher"
+      },
+      "hostingPlanName": {
+        "value": "ms-pcm-hackday-plan"
+      },
+      "appInsightsLocation": {
+        "value": "East US"
+      },
+      "sku": {
+        "value": "P1v2 Premium"
+      }
+    }
+  }

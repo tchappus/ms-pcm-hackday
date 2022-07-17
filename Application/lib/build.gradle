@@ -1,0 +1,13 @@
+plugins {
+    id 'java'
+}
+
+group = 'com.myapp'
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+    implementation 'com.azure.spring:spring-cloud-azure-starter-data-cosmos:4.2.0'
+}

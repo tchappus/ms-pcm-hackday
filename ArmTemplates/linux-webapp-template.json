@@ -17,11 +17,26 @@
         },
         "linuxFxVersion": {
             "type": "string",
-            "defaultValue": "TOMCAT|8.5-jre8"
+            "defaultValue": "TOMCAT:9.0-java11"
         },
         "startupCommand": {
             "type": "string",
             "defaultValue": ""
+        },
+        "redisHost": {
+            "type": "securestring"
+        },
+        "redisPassword": {
+            "type": "securestring"
+        },
+        "jmsConnectionString": {
+            "type": "securestring"
+        },
+        "cosmosKey": {
+            "type": "securestring"
+        },
+        "cosmosEndpoint": {
+            "type": "securestring"
         }
     },
     "resources": [
@@ -36,6 +51,26 @@
                         {
                             "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
                             "value": "[reference(resourceId('microsoft.insights/components/', parameters('webAppName')), '2015-05-01').InstrumentationKey]"
+                        },
+                        {
+                            "name": "REDIS_HOST",
+                            "value": "[parameters('redisHost')]"
+                        },
+                        {
+                            "name": "REDIS_PASSWORD",
+                            "value": "[parameters('redisPassword')]"
+                        },
+                        {
+                            "name": "JMS_CONNECTION_STRING",
+                            "value": "[parameters('jmsConnectionString')]"
+                        },
+                        {
+                            "name": "COSMOS_ENDPOINT",
+                            "value": "[parameters('cosmosEndpoint')]"
+                        },
+                        {
+                            "name": "COSMOS_KEY",
+                            "value": "[parameters('cosmosKey')]"
                         }
                     ],
                     "appCommandLine": "[parameters('startupCommand')]",
