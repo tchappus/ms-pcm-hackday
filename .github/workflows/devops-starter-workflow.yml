@@ -34,18 +34,16 @@ jobs:
       run: |
         cd Application
         chmod +x gradlew
-        ./gradlew build test bootwar
+        ./gradlew build test
 
     - name: Creating artifact directories
       run: |
         mkdir buildartifacts
-        mkdir deploymenttemplates
 
     # Archive build artifact
     - name: Archive Build artifacts
       run: |
         zip -qq -r ./buildartifacts/build.zip ./Application
-
     # Uploading application to build artifact
     - name: Upload target to Build Artifact d
       continue-on-error: false
@@ -54,21 +52,8 @@ jobs:
         name: buildartifacts
         path: buildartifacts
 
-    # Archive Arm templates
-    - name: Archive ArmTemplates
-      run: |
-        zip -qq -r ./deploymenttemplates/armtemplates.zip ./ArmTemplates
-
-    # Uploading Arm Templates to artifacts
-    - name: Upload Arm templates to Artifact
-      continue-on-error: false
-      uses: actions/upload-artifact@v2
-      with:
-        name: deploymenttemplates
-        path: deploymenttemplates
-
   Deploy:
-    name: Deploy to azure web app
+    name: Deploy to azure container registry
     needs: [build]
     runs-on: ubuntu-latest
     steps:
@@ -85,19 +70,6 @@ jobs:
       run: |
         unzip -qq ./buildartifacts/build.zip -d .
 
-    # Downloading Arm Templates
-    - name: Download an Arm template
-      uses: actions/download-artifact@v2
-      continue-on-error: false
-      with:
-        name: deploymenttemplates
-        path: deploymenttemplates
-
-    # Uzipping Arm template directory
-    - name: Unzipping ARM artifact
-      run: |
-        unzip -qq ./deploymenttemplates/armtemplates.zip -d .
-
     # login to azure
     - name: Login to Azure
       uses: azure/login@v1
@@ -105,36 +77,128 @@ jobs:
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-    # Deploy Arm template
-    - name: Deploy ARM Template
-      uses: azure/CLI@v1
-      continue-on-error: false
+    - name: Build and push images
+      uses: azure/docker-login@v1
       with:
-        inlineScript: |
-          az group create --name "${{ env.RESOURCEGROUPNAME }}" --location "${{ env.LOCATION }}"
-          az deployment group create --resource-group "${{ env.RESOURCEGROUPNAME }}" --template-file ./ArmTemplates/${{ env.WEBAPPTEMPLATENAME }} --parameters ./ArmTemplates/generator-parameters.json
-          az deployment group create --resource-group "${{ env.RESOURCEGROUPNAME }}" --template-file ./ArmTemplates/${{ env.WEBAPPTEMPLATENAME }} --parameters ./ArmTemplates/enricher-parameters.json
-          az deployment group create --resource-group "${{ env.RESOURCEGROUPNAME }}" --template-file ./ArmTemplates/${{ env.WEBAPPTEMPLATENAME }} --parameters ./ArmTemplates/writer-parameters.json
+        login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
+        username: ${{ secrets.REGISTRY_USERNAME }}
+        password: ${{ secrets.REGISTRY_PASSWORD }}
+    - run: |
+        cd Application
+        docker build --build-arg JAR_FILE=payment-generator/build/libs/payment-generator.jar . -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/payment-generator:${{ github.sha }}
+        docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/payment-generator:${{ github.sha }}
+        docker build --build-arg JAR_FILE=payment-enricher/build/libs/payment-enricher.jar . -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/payment-enricher:${{ github.sha }}
+        docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/payment-enricher:${{ github.sha }}
+        docker build --build-arg JAR_FILE=payment-writer/build/libs/payment-writer.jar . -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/payment-writer:${{ github.sha }}
+        docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/payment-writer:${{ github.sha }}
+
+    - name: 'Deploy Generator to Azure Container Instances'
+      uses: 'azure/aci-deploy@v1'
+      with:
+        resource-group: ${{ secrets.RESOURCE_GROUP }}
+        dns-name-label: ${{ secrets.RESOURCE_GROUP }}${{ github.run_number }}-generator
+        image: ${{ secrets.REGISTRY_LOGIN_SERVER }}/payment-generator:${{ github.sha }}
+        registry-login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
+        registry-username: ${{ secrets.REGISTRY_USERNAME }}
+        registry-password: ${{ secrets.REGISTRY_PASSWORD }}
+        name: payment-generator
+        location: 'west us'
+        secure-environment-variables: JMS_CONNECTION_STRING=${{ secrets.JMS_CONNECTION_STRING }}
+
+    - name: 'Deploy Enricher to Azure Container Instances'
+      uses: 'azure/aci-deploy@v1'
+      with:
+        resource-group: ${{ secrets.RESOURCE_GROUP }}
+        dns-name-label: ${{ secrets.RESOURCE_GROUP }}${{ github.run_number }}-enricher
+        image: ${{ secrets.REGISTRY_LOGIN_SERVER }}/payment-enricher:${{ github.sha }}
+        registry-login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
+        registry-username: ${{ secrets.REGISTRY_USERNAME }}
+        registry-password: ${{ secrets.REGISTRY_PASSWORD }}
+        name: payment-enricher
+        location: 'west us'
+        secure-environment-variables: JMS_CONNECTION_STRING=${{ secrets.JMS_CONNECTION_STRING }} REDIS_HOST=${{ secrets.REDIS_HOST }} REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
+
+    - name: 'Deploy Writer to Azure Container Instances'
+      uses: 'azure/aci-deploy@v1'
+      with:
+        resource-group: ${{ secrets.RESOURCE_GROUP }}
+        dns-name-label: ${{ secrets.RESOURCE_GROUP }}${{ github.run_number }}-writer
+        image: ${{ secrets.REGISTRY_LOGIN_SERVER }}/payment-writer:${{ github.sha }}
+        registry-login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
+        registry-username: ${{ secrets.REGISTRY_USERNAME }}
+        registry-password: ${{ secrets.REGISTRY_PASSWORD }}
+        name: payment-writer
+        location: 'west us'
+        secure-environment-variables: JMS_CONNECTION_STRING=${{ secrets.JMS_CONNECTION_STRING }} COSMOS_KEY=${{ secrets.COSMOS_KEY }} COSMOS_ENDPOINT=${{ secrets.COSMOS_ENDPOINT }}
+
+  # Deploy:
+  #   name: Deploy to azure web app
+  #   needs: [build]
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   # Downloading build artifact
+  #   - name: Download a Build Artifact
+  #     uses: actions/download-artifact@v2
+  #     continue-on-error: false
+  #     with:
+  #       name: buildartifacts
+  #       path: buildartifacts
+
+  #   # Uzipping build artifacts
+  #   - name: Unzipping Build artifact
+  #     run: |
+  #       unzip -qq ./buildartifacts/build.zip -d .
+
+  #   # Downloading Arm Templates
+  #   - name: Download an Arm template
+  #     uses: actions/download-artifact@v2
+  #     continue-on-error: false
+  #     with:
+  #       name: deploymenttemplates
+  #       path: deploymenttemplates
+
+  #   # Uzipping Arm template directory
+  #   - name: Unzipping ARM artifact
+  #     run: |
+  #       unzip -qq ./deploymenttemplates/armtemplates.zip -d .
+
+  #   # login to azure
+  #   - name: Login to Azure
+  #     uses: azure/login@v1
+  #     continue-on-error: false
+  #     with:
+  #       creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+  #   # Deploy Arm template
+  #   - name: Deploy ARM Template
+  #     uses: azure/CLI@v1
+  #     continue-on-error: false
+  #     with:
+  #       inlineScript: |
+  #         az group create --name "${{ env.RESOURCEGROUPNAME }}" --location "${{ env.LOCATION }}"
+  #         az deployment group create --resource-group "${{ env.RESOURCEGROUPNAME }}" --template-file ./ArmTemplates/${{ env.WEBAPPTEMPLATENAME }} --parameters ./ArmTemplates/generator-parameters.json
+  #         az deployment group create --resource-group "${{ env.RESOURCEGROUPNAME }}" --template-file ./ArmTemplates/${{ env.WEBAPPTEMPLATENAME }} --parameters ./ArmTemplates/enricher-parameters.json
+  #         az deployment group create --resource-group "${{ env.RESOURCEGROUPNAME }}" --template-file ./ArmTemplates/${{ env.WEBAPPTEMPLATENAME }} --parameters ./ArmTemplates/writer-parameters.json
 
 
-    # Deploy web app on azure
-    - name: 'Deploy to Azure Generator'
-      uses: azure/webapps-deploy@v2
-      with: 
-        app-name: '${{ env.AZURE_WEBAPP_NAME }}-generator'
-        package: '${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/payment-generator/build/libs/ROOT.war'
+  #   # Deploy web app on azure
+  #   - name: 'Deploy to Azure Generator'
+  #     uses: azure/webapps-deploy@v2
+  #     with: 
+  #       app-name: '${{ env.AZURE_WEBAPP_NAME }}-generator'
+  #       package: '${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/payment-generator/build/libs/ROOT.war'
 
-    - name: 'Deploy to Azure Enricher'
-      uses: azure/webapps-deploy@v2
-      with: 
-        app-name: '${{ env.AZURE_WEBAPP_NAME }}-enricher'
-        package: '${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/payment-enricher/build/libs/ROOT.war'
+  #   - name: 'Deploy to Azure Enricher'
+  #     uses: azure/webapps-deploy@v2
+  #     with: 
+  #       app-name: '${{ env.AZURE_WEBAPP_NAME }}-enricher'
+  #       package: '${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/payment-enricher/build/libs/ROOT.war'
 
-    - name: 'Deploy to Azure Writer'
-      uses: azure/webapps-deploy@v2
-      with: 
-        app-name: '${{ env.AZURE_WEBAPP_NAME }}-writer'
-        package: '${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/payment-writer/build/libs/ROOT.war'
+  #   - name: 'Deploy to Azure Writer'
+  #     uses: azure/webapps-deploy@v2
+  #     with: 
+  #       app-name: '${{ env.AZURE_WEBAPP_NAME }}-writer'
+  #       package: '${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/payment-writer/build/libs/ROOT.war'
 
   # FunctionalTests:
   #   name: Run Functional tests
