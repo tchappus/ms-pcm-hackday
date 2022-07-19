@@ -1,11 +1,14 @@
 package com.myapp.lib;
 
 import com.azure.spring.data.cosmos.core.mapping.Container;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import org.springframework.data.annotation.Id;
 
 import java.io.Serializable;
 
 @Container(containerName = "payments")
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class EnrichedPayment implements Serializable {
 
     @Id
