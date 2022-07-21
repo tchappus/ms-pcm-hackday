@@ -91,6 +91,8 @@ jobs:
         docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/payment-enricher:${{ github.sha }}
         docker build --build-arg JAR_FILE=payment-writer/build/libs/payment-writer.jar . -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/payment-writer:${{ github.sha }}
         docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/payment-writer:${{ github.sha }}
+        docker build --build-arg JAR_FILE=payment-api/build/libs/payment-api.jar . -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/payment-api:${{ github.sha }}
+        docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/payment-api:${{ github.sha }}
 
     - name: 'Deploy Generator to Azure Container Instances'
       uses: 'azure/aci-deploy@v1'
@@ -128,6 +130,19 @@ jobs:
         registry-username: ${{ secrets.REGISTRY_USERNAME }}
         registry-password: ${{ secrets.REGISTRY_PASSWORD }}
         name: payment-writer
+        location: 'west us'
+        secure-environment-variables: JMS_CONNECTION_STRING=${{ secrets.JMS_CONNECTION_STRING }} COSMOS_KEY=${{ secrets.COSMOS_KEY }} COSMOS_ENDPOINT=${{ secrets.COSMOS_ENDPOINT }}
+
+    - name: 'Deploy API to Azure Container Instances'
+      uses: 'azure/aci-deploy@v1'
+      with:
+        resource-group: ${{ secrets.RESOURCE_GROUP }}
+        dns-name-label: ${{ secrets.RESOURCE_GROUP }}${{ github.run_number }}-api
+        image: ${{ secrets.REGISTRY_LOGIN_SERVER }}/payment-api:${{ github.sha }}
+        registry-login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
+        registry-username: ${{ secrets.REGISTRY_USERNAME }}
+        registry-password: ${{ secrets.REGISTRY_PASSWORD }}
+        name: payment-api
         location: 'west us'
         secure-environment-variables: JMS_CONNECTION_STRING=${{ secrets.JMS_CONNECTION_STRING }} COSMOS_KEY=${{ secrets.COSMOS_KEY }} COSMOS_ENDPOINT=${{ secrets.COSMOS_ENDPOINT }}
 
