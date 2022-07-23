@@ -5,6 +5,7 @@ import com.myapp.enricher.model.BicCodeList;
 import com.myapp.enricher.repo.BicCodeRepo;
 import com.myapp.lib.EnrichedPayment;
 import com.myapp.lib.InitiatedPayment;
+import com.myapp.lib.Party;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +27,25 @@ public class BicInfoService {
 
     private final BicCodeRepo bicCodeRepo;
     private final JmsTemplate jmsTemplate;
+
+    private Party generatePartyFromBic(String bic) {
+        var bicFromRedis = bicCodeRepo.findById(bic);
+        var party = new Party();
+        party.setBicCode(bic);
+
+        if (bicFromRedis.isPresent()) {
+            party.setCity(bicFromRedis.get().getCity());
+            party.setBankName(bicFromRedis.get().getBank());
+            party.setBranch(bicFromRedis.get().getBranch());
+        } else {
+            party.setCity("unknown");
+            party.setBankName("unknown");
+            party.setBranch("unknown");
+        }
+
+        return party;
+    }
+
 
     private String readBicTextFile() throws IOException {
         var builder = new StringBuilder();
@@ -63,23 +83,16 @@ public class BicInfoService {
     }
 
     @JmsListener(destination = "payments-init", containerFactory = "jmsListenerContainerFactory")
-    public void recieveMessage(InitiatedPayment payment) {
+    public void receiveMessage(InitiatedPayment payment) {
         logger.info(payment.toString());
-        var enrichedPayment = new EnrichedPayment(payment);
-        var bic = payment.getBicCode();
+        var enrichedPayment = new EnrichedPayment();
 
-        var bicFromRedis = bicCodeRepo.findById(bic);
-
-        if (bicFromRedis.isPresent()) {
-            enrichedPayment.setCity(bicFromRedis.get().getCity());
-            enrichedPayment.setBankName(bicFromRedis.get().getBank());
-            enrichedPayment.setBranch(bicFromRedis.get().getBranch());
-        } else {
-            enrichedPayment.setCity("unknown");
-            enrichedPayment.setBankName("unknown");
-            enrichedPayment.setBranch("unknown");
-        }
-
+        enrichedPayment.setAmount(payment.getAmount());
+        enrichedPayment.setCurrency(payment.getCurrency());
+        enrichedPayment.setDirection(payment.getDirection());
+        enrichedPayment.setTimestamp(payment.getTimestamp());
+        enrichedPayment.setInternalParty(generatePartyFromBic(payment.getInternalParty()));
+        enrichedPayment.setExternalParty(generatePartyFromBic(payment.getExternalParty()));
         enrichedPayment.setId(String.valueOf(UUID.randomUUID()));
 
         jmsTemplate.convertAndSend("payments-persist", enrichedPayment);

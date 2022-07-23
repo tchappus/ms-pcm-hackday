@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.springframework.data.annotation.Id;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 @Container(containerName = "payments")
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -13,34 +14,30 @@ public class EnrichedPayment implements Serializable {
 
     @Id
     private String id;
-
-    private String bicCode;
-
-    private String bankName;
-
-    private String city;
-
+    private String direction;
     private String currency;
+    private LocalDateTime timestamp;
     private long amount;
-
-    private String branch;
-
+    private Party internalParty;
+    private Party externalParty;
+    
     public EnrichedPayment() {
-
+    }
+    
+    public String getId() {
+        return id;
     }
 
-    public EnrichedPayment(InitiatedPayment initiatedPayment) {
-        this.bicCode = initiatedPayment.getBicCode();
-        this.currency = initiatedPayment.getCurrency();
-        this.amount = initiatedPayment.getAmount();
+    public void setId(String id) {
+        this.id = id;
     }
 
-    public String getBicCode() {
-        return bicCode;
+    public String getDirection() {
+        return direction;
     }
 
-    public void setBicCode(String bicCode) {
-        this.bicCode = bicCode;
+    public void setDirection(String direction) {
+        this.direction = direction;
     }
 
     public String getCurrency() {
@@ -51,6 +48,14 @@ public class EnrichedPayment implements Serializable {
         this.currency = currency;
     }
 
+    public LocalDateTime getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(LocalDateTime timestamp) {
+        this.timestamp = timestamp;
+    }
+
     public long getAmount() {
         return amount;
     }
@@ -59,46 +64,27 @@ public class EnrichedPayment implements Serializable {
         this.amount = amount;
     }
 
-    public String getId() {
-        return id;
+    public Party getInternalParty() {
+        return internalParty;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public void setInternalParty(Party internalParty) {
+        this.internalParty = internalParty;
     }
 
-    public String getBankName() {
-        return bankName;
+    public Party getExternalParty() {
+        return externalParty;
     }
 
-    public void setBankName(String bankName) {
-        this.bankName = bankName;
-    }
-
-    public String getCity() {
-        return city;
-    }
-
-    public void setCity(String city) {
-        this.city = city;
-    }
-
-    public String getBranch() {
-        return branch;
-    }
-
-    public void setBranch(String branch) {
-        this.branch = branch;
+    public void setExternalParty(Party externalParty) {
+        this.externalParty = externalParty;
     }
 
     @Override
     public String toString() {
-        return "EnrichedPayment{" +
-                "bicCode='" + bicCode + '\'' +
-                ", bankName='" + bankName + '\'' +
-                ", address='" + city + '\'' +
-                ", currency='" + currency + '\'' +
-                ", amount=" + amount +
-                '}';
+        return "EnrichedPayment [amount=" + amount + ", currency=" + currency + ", direction=" + direction
+                + ", externalParty=" + externalParty + ", id=" + id + ", internalParty=" + internalParty
+                + ", timestamp=" + timestamp + "]";
     }
+    
 }

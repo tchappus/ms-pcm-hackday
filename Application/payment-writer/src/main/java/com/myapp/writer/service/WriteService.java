@@ -21,7 +21,7 @@ public class WriteService {
     }
 
     @JmsListener(destination = "payments-persist", containerFactory = "jmsListenerContainerFactory")
-    public void recieveMessage(EnrichedPayment payment) {
+    public void receiveMessage(EnrichedPayment payment) {
         logger.info(payment.toString());
 
         paymentsRepo.save(payment).block();
