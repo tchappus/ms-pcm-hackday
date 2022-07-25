@@ -1,12 +1,11 @@
 package com.myapp.lib;
 
-import com.azure.spring.data.cosmos.core.mapping.Container;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import java.io.Serializable;
 
 import org.springframework.data.annotation.Id;
 
-import java.io.Serializable;
-import java.time.LocalDateTime;
+import com.azure.spring.data.cosmos.core.mapping.Container;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Container(containerName = "payments")
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -16,7 +15,7 @@ public class EnrichedPayment implements Serializable {
     private String id;
     private String direction;
     private String currency;
-    private LocalDateTime timestamp;
+    private String timestamp;
     private long amount;
     private Party internalParty;
     private Party externalParty;
@@ -48,11 +47,11 @@ public class EnrichedPayment implements Serializable {
         this.currency = currency;
     }
 
-    public LocalDateTime getTimestamp() {
+    public String getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(LocalDateTime timestamp) {
+    public void setTimestamp(String timestamp) {
         this.timestamp = timestamp;
     }
 

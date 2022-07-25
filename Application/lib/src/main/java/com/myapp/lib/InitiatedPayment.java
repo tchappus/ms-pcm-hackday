@@ -1,7 +1,6 @@
 package com.myapp.lib;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
 
 public class InitiatedPayment implements Serializable {
 
@@ -9,7 +8,7 @@ public class InitiatedPayment implements Serializable {
     private String externalParty;
     private String direction;
     private String currency;
-    private LocalDateTime timestamp;
+    private String timestamp;
     private long amount;
 
     public InitiatedPayment() {
@@ -47,11 +46,11 @@ public class InitiatedPayment implements Serializable {
         this.currency = currency;
     }
 
-    public LocalDateTime getTimestamp() {
+    public String getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(LocalDateTime timestamp) {
+    public void setTimestamp(String timestamp) {
         this.timestamp = timestamp;
     }
 

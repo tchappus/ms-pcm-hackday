@@ -136,7 +136,7 @@ public class PaymentController {
                 payment.getExternalParty().setBranch("branch");
                 payment.getExternalParty().setCity("city");
 
-                payment.setTimestamp(LocalDateTime.now());
+                payment.setTimestamp(LocalDateTime.now().toString());
                 payment.setId(UUID.randomUUID().toString());
                 emitter.next(payment);
                 
