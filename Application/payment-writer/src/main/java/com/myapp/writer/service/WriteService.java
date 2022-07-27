@@ -7,7 +7,7 @@ import org.springframework.jms.annotation.JmsListener;
 import org.springframework.stereotype.Component;
 
 import com.myapp.lib.EnrichedPayment;
-import com.myapp.writer.repo.PaymentsRepo;
+import com.myapp.lib.repo.PaymentsRepo;
 
 @Component
 public class WriteService {

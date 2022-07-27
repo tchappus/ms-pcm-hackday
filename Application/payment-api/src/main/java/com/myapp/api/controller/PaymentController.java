@@ -7,6 +7,7 @@ import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,6 +25,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.myapp.lib.EnrichedPayment;
 import com.myapp.lib.Party;
+import com.myapp.lib.repo.PaymentsRepo;
 
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
@@ -35,12 +37,13 @@ public class PaymentController {
     private final static ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final CosmosAsyncDatabase db;
+    private final PaymentsRepo repo;
 
     public static ChangeFeedProcessor getChangeFeedProcessor(String hostName, CosmosAsyncContainer feedContainer, CosmosAsyncContainer leaseContainer, Consumer<EnrichedPayment> paymentConsumer) {
 
         var leasePrefix = String.format("apiSub-%s", UUID.randomUUID());
         var options = new ChangeFeedProcessorOptions();            
-        options.setStartFromBeginning(true);
+        options.setStartFromBeginning(false);
         options.setLeasePrefix(leasePrefix);
         
         return new ChangeFeedProcessorBuilder()
@@ -67,13 +70,22 @@ public class PaymentController {
                 .buildChangeFeedProcessor();
     }
  
-    public PaymentController(CosmosClientBuilder builder) {
+    public PaymentController(CosmosClientBuilder builder, PaymentsRepo repo) {
         this.db = CosmosFactory.createCosmosAsyncClient(builder.contentResponseOnWriteEnabled(true)).getDatabase("payments-db");
+        this.repo = repo;
+    }
+
+    @CrossOrigin(allowedHeaders = "*")
+    @GetMapping(value = "/payments/all")
+    public Flux<EnrichedPayment> getAllPayments() {
+
+        return repo.findAll(Sort.by("timestamp"));
+
     }
 
     @CrossOrigin(allowedHeaders = "*")
     @GetMapping(value = "/payments", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<EnrichedPayment> getPayments() {
+    public Flux<EnrichedPayment> streamPayments() {
         return Flux.<EnrichedPayment>create(emitter -> {
 
             var feedContainer = db.getContainer("payments");
