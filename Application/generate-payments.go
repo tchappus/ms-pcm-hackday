@@ -62,7 +62,7 @@ func main() {
 
 		payloadBuf := new(bytes.Buffer)
 		json.NewEncoder(payloadBuf).Encode(body)
-		req, _ := http.NewRequest("POST", "http://payment-apps41-generator.westus.azurecontainer.io/send", payloadBuf)
+		req, _ := http.NewRequest("POST", "http://payment-apps42-generator.westus.azurecontainer.io/send", payloadBuf)
 		req.Header.Add("Content-Type", "application/json")
 
 		client := &http.Client{}
